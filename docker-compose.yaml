@@ -1,0 +1,98 @@
+version: '3.7'
+
+services:
+
+    mysql_db:
+        container_name: mysql_container
+        image: mysql:8
+
+        command: --default-authentication-plugin=mysql_native_password
+
+        environment:
+            LANG: C.UTF-8
+            MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:-root}
+            MYSQL_USER: ${MYSQL_USER:-admin}
+            MYSQL_PASSWORD: ${MYSQL_PASSWORD:-admin}
+            MYSQL_DATABASE: ${MYSQL_DATABASE:-database}
+
+        volumes:
+            - ./initdb:/docker-entrypoint-initdb.d
+            - ./mysql:/var/lib/mysql/
+
+        ports:
+            - ${MYSQL_PORT:-3306}:3306
+
+        restart: unless-stopped
+
+        healthcheck:
+            test: [ 'CMD', 'mysqladmin', 'ping', '-proot' ]
+            interval: 1m
+            timeout: 5s
+            retries: 5
+            start_period: 3m
+
+        deploy:
+            resources:
+                limits:
+                    cpus: '1'
+                    memory: 2G
+
+        networks:
+            - mysql_net
+
+    adminer:
+        container_name: adminer_container
+        image: adminer:4
+
+        environment:
+            ADMINER_DEFAULT_DB_DRIVER: mysql
+            ADMINER_DEFAULT_DB_HOST: mysql_container:3306
+            ADMINER_DEFAULT_DB_NAME: database
+
+        depends_on:
+            - mysql_db
+
+        ports:
+            - ${ADMINER_PORT:-8080}:8080
+
+        networks:
+            - mysql_net
+
+        restart: unless-stopped
+
+networks:
+    mysql_net:
+        driver: bridge
+
+# -------------------------------
+# Start:
+# docker-compose --compatibility up -d
+# -------------------------------
+# Access to MySQL:
+# Root password: root
+# URL: localhost:3306
+# Database: database
+# Username: admin
+# Password: admin
+# -------------------------------
+# Access to Adminer:
+# URL: http://localhost:8080
+# -------------------------------
+# Connect to MySQL from Adminer
+# System: MySQL
+# Server: mysql_container:3306
+# Username: admin
+# Password: admin
+# Database: database
+# -------------------------------
+# Stop lifted containers:
+# docker-compose --compatibility stop
+# -------------------------------
+# Start stopped containers
+# docker-compose --compatibility start
+# -------------------------------
+# Stop and delete containers and network:
+# docker-compose --compatibility down
+# -------------------------------
+# Clear project
+# sudo rm -r mysql
