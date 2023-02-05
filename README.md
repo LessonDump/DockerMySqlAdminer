@@ -1,4 +1,4 @@
-# MySQL на базе docker-compose
+# MySQL + Adminer на базе docker-compose
 
 ## Требования:
 
